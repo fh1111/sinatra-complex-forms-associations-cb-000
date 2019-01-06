@@ -1,45 +1,50 @@
-class PetsController < ApplicationController
+class OwnersController < ApplicationController
 
-  get '/pets' do
+  get '/owners' do
+    @owners = Owner.all
+    erb :'/owners/index'
+  end
+
+  get '/owners/new' do
     @pets = Pet.all
-    erb :'/pets/index'
+    erb :'/owners/new'
   end
 
-  get '/pets/new' do
-    erb :'/pets/new'
-  end
-
-  post '/pets' do
-
-    @pet = Pet.create(params[:pet])
-    if !params["owner"]["name"].empty?
-      @pet.owner = Owner.create(name: params["owner"]["name"])
+  post '/owners' do
+    @owner = Owner.create(params[:owner])
+    if !params["pet"]["name"].empty?
+      @owner.pets << Pet.create(name: params["pet"]["name"])
+      # When using the shovel operator, ActiveRecord instantly fires update SQL
+      # without waiting for the save or update call on the parent object,
+      # unless the parent object is a new record.
     end
-    @pet.save
-    redirect to "pets/#{@pet.id}"
+    redirect "owners/#{@owner.id}"
   end
 
-  get '/pets/:id' do
-    @pet = Pet.find(params[:id])
-    erb :'/pets/show'
+  get '/owners/:id/edit' do
+    @owner = Owner.find(params[:id])
+    @pets = Pet.all
+    erb :'/owners/edit'
   end
 
+  get '/owners/:id' do
+    @owner = Owner.find(params[:id])
+    erb :'/owners/show'
+  end
 
+  patch '/owners/:id' do
+    @owner = Owner.find(params[:id])
 
-
-  patch '/pets/:id' do
-    @pet = Pet.find(params[:id])
-    @pet.update(params["pet"])
-    if !params["owner"]["name"].empty?
-     @pet.owner = Owner.create(name: params["owner"]["name"])
+    ####### the following bug fix is required so that it's possible to remove ALL previous pets from owner.
+    if !params[:owner].keys.include?("pet_ids")
+    params[:owner]["pet_ids"] = []
     end
-    @pet.save
-    redirect to "pets/#{@pet.id}"
-  end
+    ####### End of fix
 
-
-  get '/pets/:id/edit' do
-    @pet = Pet.find(params[:id])
-    erb :'/pets/edit'
+    @owner.update(params["owner"])
+    if !params["pet"]["name"].empty?
+      @owner.pets << Pet.create(name: params["pet"]["name"])
+    end
+    redirect "owners/#{@owner.id}"
   end
 end
