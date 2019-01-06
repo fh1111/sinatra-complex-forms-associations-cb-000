@@ -12,8 +12,8 @@ class OwnersController < ApplicationController
 
   post '/owners' do
     @owner = Owner.create(params[:owner])
-    redirect "owners/#{@owner.id}"
-
+    if !params["pet"]["name"].empty?
+      @owner.pets << Pet.create(name: params["pet"]["name"])
     end
     redirect "owners/#{@owner.id}"
   end
@@ -30,18 +30,17 @@ class OwnersController < ApplicationController
   end
 
   patch '/owners/:id' do
-    @owner = Owner.find(params[:id])
+    ####### bug fix
+  if !params[:owner].keys.include?("pet_ids")
+  params[:owner]["pet_ids"] = []
+  end
+  #######
 
-    ####### the following bug fix is required so that it's possible to remove ALL previous pets from owner.
-    if !params[:owner].keys.include?("pet_ids")
-    params[:owner]["pet_ids"] = []
-    end
-    ####### End of fix
-
-    @owner.update(params["owner"])
-    if !params["pet"]["name"].empty?
-      @owner.pets << Pet.create(name: params["pet"]["name"])
-    end
-    redirect "owners/#{@owner.id}"
+  @owner = Owner.find(params[:id])
+  @owner.update(params["owner"])
+  if !params["pet"]["name"].empty?
+    @owner.pets << Pet.create(name: params["pet"]["name"])
+  end
+  redirect "owners/#{@owner.id}"
   end
 end
