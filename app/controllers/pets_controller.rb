@@ -1,50 +1,40 @@
-class OwnersController < ApplicationController
+class PetsController < ApplicationController
 
-  get '/owners' do
-    @owners = Owner.all
-    erb :'/owners/index'
-  end
-
-  get '/owners/new' do
+  get '/pets' do
     @pets = Pet.all
-    erb :'/owners/new'
+    erb :'/pets/index'
   end
 
-  post '/owners' do
-    @owner = Owner.create(params[:owner])
-    if !params["pet"]["name"].empty?
-      @owner.pets << Pet.create(name: params["pet"]["name"])
-      # When using the shovel operator, ActiveRecord instantly fires update SQL
-      # without waiting for the save or update call on the parent object,
-      # unless the parent object is a new record.
+  get '/pets/new' do
+    erb :'/pets/new'
+  end
+
+  post '/pets' do
+    @pet = Pet.create(params[:pet])
+    if !params["owner"]["name"].empty?
+      @pet.owner = Owner.create(name: params["owner"]["name"])
     end
-    redirect "owners/#{@owner.id}"
+    @pet.save
+    redirect "pets/#{@pet.id}"
   end
 
-  get '/owners/:id/edit' do
-    @owner = Owner.find(params[:id])
-    @pets = Pet.all
-    erb :'/owners/edit'
+  get '/pets/:id' do
+    @pet = Pet.find(params[:id])
+    erb :'/pets/show'
   end
 
-  get '/owners/:id' do
-    @owner = Owner.find(params[:id])
-    erb :'/owners/show'
-  end
-
-  patch '/owners/:id' do
-    @owner = Owner.find(params[:id])
-
-    ####### the following bug fix is required so that it's possible to remove ALL previous pets from owner.
-    if !params[:owner].keys.include?("pet_ids")
-    params[:owner]["pet_ids"] = []
+  post '/pets/:id' do
+    @pet = Pet.find(params[:id])
+    @pet.update(params["pet"])
+    if !params["owner"]["name"].empty?
+      @pet.owner = Owner.create(name: params["owner"]["name"])
     end
-    ####### End of fix
+    @pet.save
+    redirect "pets/#{@pet.id}"
+  end
 
-    @owner.update(params["owner"])
-    if !params["pet"]["name"].empty?
-      @owner.pets << Pet.create(name: params["pet"]["name"])
-    end
-    redirect "owners/#{@owner.id}"
+  get '/pets/:id/edit' do
+    @pet = Pet.find(params[:id])
+    erb :'/pets/edit'
   end
 end
